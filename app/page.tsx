@@ -1,64 +1,128 @@
-import Image from "next/image";
+"use client";
+import React from "react";
+
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { watch } from "fs";
+import { MovieGrid } from "@/components/ui/movie-grid";
+import { Spinner } from "@/components/ui/spinner";
 
 export default function Home() {
+  const [watchlistOne, setWatchlistOne] = React.useState([]);
+  const [watchlistTwo, setWatchlistTwo] = React.useState([]);
+  const [combinedWatchlist, setCombinedWatchlist] = React.useState([]);
+  const [fetching, setFetching] = React.useState(false);
+
+  const [userOne, setUserOne] = React.useState("casster");
+  const [userTwo, setUserTwo] = React.useState("_claud_");
+
+  const fetchWatchlist = async (username: string) => {
+    const response = await fetch(
+      `/api/watchlist?username=${encodeURIComponent(username)}`,
+    );
+    if (!response.ok)
+      throw new Error(`Failed to fetch watchlist for ${username}`);
+
+    return response.json();
+  };
+
+  const handleCombine = async () => {
+    setFetching(true);
+    try {
+      // Fetch watchlists for both users
+      const watchlistOneData = await fetchWatchlist(userOne);
+      setWatchlistOne(watchlistOneData);
+      const watchlistTwoData = await fetchWatchlist(userTwo);
+      setWatchlistTwo(watchlistTwoData);
+
+      const combined = watchlistOneData.filter(
+        (item: { title: string; image: string }) =>
+          watchlistTwoData.some(
+            (otherItem: { title: string; image: string }) =>
+              item.title === otherItem.title,
+          ),
+      );
+
+      setCombinedWatchlist(combined);
+    } finally {
+      setFetching(false);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
+    <div className="flex min-h-screen flex-col items-center p-24 bg-gray-800">
+      <Card className="w-full max-w-sm">
+        <CardHeader>
+          <CardTitle>Hi, Claud</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <p className="text-sm text-muted-foreground">
+            This is my attempt at clearing out our watchlists. What are we
+            watching?
           </p>
+        </CardContent>
+      </Card>
+
+      <main className="flex flex-col items-center gap-8 pt-16">
+        <div className="flex w-full items-center justify-center gap-8">
+          <div className="flex items-center gap-4">
+            {/* <Tooltip>
+              <TooltipTrigger>
+                <Button className="">
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    width="32"
+                    height="32"
+                    viewBox="0 0 512 512"
+                  >
+                    <path
+                      fill="currentColor"
+                      d="m386.688 487.75l-119.236-55.423c-7.898-3.673-11.334-13.065-7.66-20.976l84.374-181.523c3.667-7.904 13.07-11.334 20.963-7.667l119.24 55.434c7.9 3.673 11.33 13.065 7.656 20.964l-84.37 181.524c-3.678 7.904-13.076 11.334-20.968 7.667zM98.95 467.945L19.79 284.09c-3.448-8.007.255-17.302 8.25-20.744l39.196-16.872l48.975 184.044c4.694 17.588 22.755 28.078 40.36 23.39l39.032-10.386l-75.907 32.686c-8.007 3.443-17.296-.255-20.744-8.262zm33.89-41.86L81.362 232.638c-2.24-8.42 2.78-17.078 11.19-19.312l34.033-9.052l-4.098 30.465c-2.422 18.036 10.224 34.652 28.285 37.087l79.828 10.758l-32.497 109.467c-3.345 11.28-.37 22.948 6.866 31.18l-52.82 14.05c-8.42 2.24-17.07-2.77-19.31-11.196zm108.428-4.76l-16.02-4.76c-8.36-2.49-13.12-11.267-10.644-19.627l56.97-191.9c2.484-8.36 11.28-13.12 19.622-10.65l49.073 14.583l.008-.005l.12.044l-.133-.034a32.8 32.8 0 0 0-11.705 13.605l-84.38 181.53a33 33 0 0 0-2.915 17.218zm-5.707-155.43l-82.486-11.117c-8.633-1.166-14.704-9.12-13.538-17.758l26.73-198.39c1.16-8.633 9.125-14.698 17.74-13.538l130.327 17.563c8.627 1.166 14.692 9.125 13.532 17.752L311.42 182.46l-15.33-4.552c-17.467-5.197-35.826 4.784-41.004 22.232zm-5.19-31.46c4.67-3.055 7.474-7.438 8.42-13.145c.936-5.633-.357-10.617-3.866-14.945c-3.51-4.414-8.39-7.14-14.656-8.178c-6.344-1.057-11.93-.073-16.75 2.956c-4.826 3.03-7.692 7.316-8.615 12.87c-.898 5.386.425 10.42 3.97 15.082c3.565 4.504 8.525 7.285 14.863 8.34q9.524 1.584 16.634-2.98m25.978-81.243c4.693-2.726 8.888-5.434 12.598-8.117c3.703-2.684 6.915-5.586 9.635-8.725a45 45 0 0 0 6.733-10.307c1.76-3.74 3.048-8.032 3.85-12.865c1.262-7.62 1.02-14.358-.735-20.234c-1.75-5.87-4.693-10.94-8.833-15.22c-4.135-4.27-9.24-7.753-15.318-10.43c-6.07-2.684-12.804-4.633-20.174-5.86c-7.692-1.28-15.3-1.602-22.815-.977c-7.516.614-14.63 2.247-21.346 4.88l-5.95 35.802c6.813-4.25 13.77-7.104 20.855-8.567q10.634-2.214 19.913-.668c21.467 4.092 19.44 24.898 8.76 34.03c-5.652 4.473-11.334 8.802-15.942 11.345c-10.48 5.914-27.69 23.125-22.542 45.145l31.284 5.202c-7.11-17.757 11.663-29.462 20.028-34.434z"
+                    />
+                  </svg>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Random Pick</p>
+              </TooltipContent>
+            </Tooltip> */}
+            <Input placeholder="casster" />
+          </div>
+          <div className="flex items-center gap-4">
+            <Input placeholder="_claud_" />
+            {/* <Button className="">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="32"
+                height="32"
+                viewBox="0 0 512 512"
+              >
+                <path
+                  fill="currentColor"
+                  d="m386.688 487.75l-119.236-55.423c-7.898-3.673-11.334-13.065-7.66-20.976l84.374-181.523c3.667-7.904 13.07-11.334 20.963-7.667l119.24 55.434c7.9 3.673 11.33 13.065 7.656 20.964l-84.37 181.524c-3.678 7.904-13.076 11.334-20.968 7.667zM98.95 467.945L19.79 284.09c-3.448-8.007.255-17.302 8.25-20.744l39.196-16.872l48.975 184.044c4.694 17.588 22.755 28.078 40.36 23.39l39.032-10.386l-75.907 32.686c-8.007 3.443-17.296-.255-20.744-8.262zm33.89-41.86L81.362 232.638c-2.24-8.42 2.78-17.078 11.19-19.312l34.033-9.052l-4.098 30.465c-2.422 18.036 10.224 34.652 28.285 37.087l79.828 10.758l-32.497 109.467c-3.345 11.28-.37 22.948 6.866 31.18l-52.82 14.05c-8.42 2.24-17.07-2.77-19.31-11.196zm108.428-4.76l-16.02-4.76c-8.36-2.49-13.12-11.267-10.644-19.627l56.97-191.9c2.484-8.36 11.28-13.12 19.622-10.65l49.073 14.583l.008-.005l.12.044l-.133-.034a32.8 32.8 0 0 0-11.705 13.605l-84.38 181.53a33 33 0 0 0-2.915 17.218zm-5.707-155.43l-82.486-11.117c-8.633-1.166-14.704-9.12-13.538-17.758l26.73-198.39c1.16-8.633 9.125-14.698 17.74-13.538l130.327 17.563c8.627 1.166 14.692 9.125 13.532 17.752L311.42 182.46l-15.33-4.552c-17.467-5.197-35.826 4.784-41.004 22.232zm-5.19-31.46c4.67-3.055 7.474-7.438 8.42-13.145c.936-5.633-.357-10.617-3.866-14.945c-3.51-4.414-8.39-7.14-14.656-8.178c-6.344-1.057-11.93-.073-16.75 2.956c-4.826 3.03-7.692 7.316-8.615 12.87c-.898 5.386.425 10.42 3.97 15.082c3.565 4.504 8.525 7.285 14.863 8.34q9.524 1.584 16.634-2.98m25.978-81.243c4.693-2.726 8.888-5.434 12.598-8.117c3.703-2.684 6.915-5.586 9.635-8.725a45 45 0 0 0 6.733-10.307c1.76-3.74 3.048-8.032 3.85-12.865c1.262-7.62 1.02-14.358-.735-20.234c-1.75-5.87-4.693-10.94-8.833-15.22c-4.135-4.27-9.24-7.753-15.318-10.43c-6.07-2.684-12.804-4.633-20.174-5.86c-7.692-1.28-15.3-1.602-22.815-.977c-7.516.614-14.63 2.247-21.346 4.88l-5.95 35.802c6.813-4.25 13.77-7.104 20.855-8.567q10.634-2.214 19.913-.668c21.467 4.092 19.44 24.898 8.76 34.03c-5.652 4.473-11.334 8.802-15.942 11.345c-10.48 5.914-27.69 23.125-22.542 45.145l31.284 5.202c-7.11-17.757 11.663-29.462 20.028-34.434z"
+                />
+              </svg>
+            </Button> */}
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+        <div className="flex w-full items-center justify-center ">
+          <Button onClick={handleCombine} disabled={fetching} className="gap-2">
+            {fetching && <Spinner data-icon="inline-start" />}
+            Combine Watchlists
+          </Button>
         </div>
+
+        {combinedWatchlist.length > 0 && (
+          <div className="flex w-full items-center justify-center">
+            <MovieGrid movies={combinedWatchlist} />
+          </div>
+        )}
       </main>
     </div>
   );
