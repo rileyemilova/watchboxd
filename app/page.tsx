@@ -92,10 +92,10 @@ export default function Home() {
                 <p>Random Pick</p>
               </TooltipContent>
             </Tooltip> */}
-            <Input placeholder="casster" />
+            <Input value={userOne} onChange={(e) => setUserOne(e.target.value)} placeholder="casster" />
           </div>
           <div className="flex items-center gap-4">
-            <Input placeholder="_claud_" />
+            <Input value={userTwo} onChange={(e) => setUserTwo(e.target.value)} placeholder="_claud_" />
             {/* <Button className="">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
